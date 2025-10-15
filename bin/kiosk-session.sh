@@ -61,4 +61,5 @@ chromium-browser \
   --start-maximized \
   --disable-features=TranslateUI \
   --enable-features=OverlayScrollbar \
+  --password-store=basic \
   "$URL"
