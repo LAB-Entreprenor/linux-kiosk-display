@@ -32,8 +32,18 @@ apt update -y >>"$LOGFILE" 2>&1
 apt install -y \
   python3 python3-pip python3-evdev python3-venv git jq \
   xdotool unclutter x11-xserver-utils \
-  xserver-xorg labwc xdg-utils \
-  chromium-browser || apt install -y chromium >>"$LOGFILE" 2>&1
+  xserver-xorg labwc xdg-utils >>"$LOGFILE" 2>&1
+
+# Chromium (handle name differences across distros)
+if apt-cache show chromium-browser >/dev/null 2>&1; then
+  echo "Installing chromium-browser..." | tee -a "$LOGFILE"
+  apt install -y chromium-browser >>"$LOGFILE" 2>&1
+elif apt-cache show chromium >/dev/null 2>&1; then
+  echo "Installing chromium..." | tee -a "$LOGFILE"
+  apt install -y chromium >>"$LOGFILE" 2>&1
+else
+  echo "Chromium not available via apt. You may need to install it manually or via snap." | tee -a "$LOGFILE"
+fi
 
 # --- 2. Python packages ---
 echo "Installing Python modules..." | tee -a "$LOGFILE"
