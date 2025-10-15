@@ -52,7 +52,7 @@ sleep 2  # ensure display is ready
 # --- Launch Chromium in kiosk mode ---
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Launching Chromium with URL: $URL" >> "$LOGFILE"
 
-chromium-browser \
+chromium \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \
