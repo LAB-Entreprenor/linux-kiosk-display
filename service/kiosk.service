@@ -1,0 +1,32 @@
+[Unit]
+Description=Raspberry Pi Kiosk Session
+After=graphical.target network.target
+
+[Service]
+# ---------------------------------------------------------
+# Launches the main kiosk session:
+#  - Ensures Flask Kiosk Manager is running
+#  - Reads /home/<user>/kiosk_config.json
+#  - Starts Chromium in kiosk mode
+#
+# The kiosk-session.sh script handles fallback URLs and
+# avoids restarting Flask if it's already active.
+# ---------------------------------------------------------
+
+# Adjust these if you run as a different user
+User=pi
+Group=pi
+
+# Required environment for X11 display and user session
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+# Launch the session script (copied by install-kiosk.sh)
+ExecStart=/usr/local/bin/kiosk-session.sh
+
+# Restart Chromium session automatically if it crashes
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

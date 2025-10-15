@@ -1,0 +1,12 @@
+[Unit]
+Description=Kiosk Tab Cycler
+After=graphical.target
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python3 /usr/local/bin/kiosk-tab-cycler.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

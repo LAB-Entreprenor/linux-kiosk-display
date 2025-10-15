@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Kiosk Manager
+Comment=Start or connect to the Raspberry Pi Kiosk Configuration Server
+Exec=sh -c 'if ! pgrep -f "/usr/local/bin/kiosk-manager.py" >/dev/null; then /usr/bin/python3 /usr/local/bin/kiosk-manager.py & sleep 2; fi; xdg-open http://localhost:8080'
+Icon=web-browser
+Terminal=false
+Type=Application
+Categories=Utility;Settings;
+StartupNotify=true

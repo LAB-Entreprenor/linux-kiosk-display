@@ -1,0 +1,26 @@
+[Unit]
+Description=Kiosk Idle Reset Monitor
+After=graphical.target
+
+[Service]
+# ---------------------------------------------------------
+# Run as root so the service can read /dev/input/event*
+# These devices require elevated privileges to detect user
+# activity from keyboard, mouse, or touchscreen.
+# If you prefer to run as a user, add them to the 'input'
+# group and adjust permissions accordingly.
+# ---------------------------------------------------------
+User=root
+Group=root
+
+ExecStart=/usr/bin/python3 /usr/local/bin/kiosk-idle-reset.py
+Restart=always
+RestartSec=5
+
+# Optional: make sure DISPLAY and XDG runtime are set
+# if your Python script needs to interact with X server
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+[Install]
+WantedBy=graphical.target
