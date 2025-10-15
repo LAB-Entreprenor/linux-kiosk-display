@@ -30,16 +30,11 @@ echo "Installing kiosk environment for user '$USER_NAME'..." | tee "$LOGFILE"
 echo "Installing dependencies..." | tee -a "$LOGFILE"
 apt update -y >>"$LOGFILE" 2>&1
 apt install -y \
-  chromium python3 python3-pip python3-evdev python3-venv git jq \
+  chromium python3 python3-pip python3-evdev python3-venv python3-flask git jq \
   xdotool unclutter x11-xserver-utils \
   xserver-xorg labwc xdg-utils >>"$LOGFILE" 2>&1
 
-# --- 2. Python packages ---
-echo "Installing Python modules..." | tee -a "$LOGFILE"
-pip3 install --upgrade pip >>"$LOGFILE" 2>&1
-pip3 install flask >>"$LOGFILE" 2>&1
-
-# --- 3. Install executables ---
+# --- 2. Install executables ---
 echo "Installing executables from $BIN_DIR to $SYSTEM_BIN..." | tee -a "$LOGFILE"
 install -Dm755 "$BIN_DIR/kiosk_manager.py"    "$SYSTEM_BIN/kiosk-manager.py"
 install -Dm755 "$BIN_DIR/kiosk-session.sh"    "$SYSTEM_BIN/kiosk-session.sh"
@@ -47,7 +42,7 @@ install -Dm755 "$BIN_DIR/kiosk-tab-cycler.py" "$SYSTEM_BIN/kiosk-tab-cycler.py"
 install -Dm755 "$BIN_DIR/kiosk-idle-reset.py" "$SYSTEM_BIN/kiosk-idle-reset.py"
 install -Dm755 "$BIN_DIR/kiosk-reset-url.sh"  "$SYSTEM_BIN/kiosk-reset-url.sh"
 
-# --- 4. Generate systemd services ---
+# --- 3. Generate systemd services ---
 echo "Generating systemd service files..." | tee -a "$LOGFILE"
 mkdir -p "$SYSTEMD_DIR"
 
@@ -103,7 +98,7 @@ EOF
 systemctl daemon-reload
 systemctl enable --now kiosk.service kiosk-idle-reset.service kiosk-tab-cycler.service
 
-# --- 5. Config file ---
+# --- 4. Config file ---
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "Creating default configuration at $CONFIG_FILE" | tee -a "$LOGFILE"
   cat <<EOF >"$CONFIG_FILE"
@@ -120,7 +115,7 @@ else
   echo "Keeping existing configuration: $CONFIG_FILE" | tee -a "$LOGFILE"
 fi
 
-# --- 6. Generate .desktop launcher ---
+# --- 5. Generate .desktop launcher ---
 echo "Generating system-wide desktop entry..." | tee -a "$LOGFILE"
 mkdir -p "$DESKTOP_DIR"
 DESKTOP_FILE="$DESKTOP_DIR/KioskManager.desktop"
@@ -138,10 +133,10 @@ EOF
 chmod 644 "$DESKTOP_FILE"
 update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true
 
-# --- 7. Ownership fix ---
+# --- 6. Ownership fix ---
 chown "$USER_NAME:$USER_NAME" "$CONFIG_FILE" || true
 
-# --- 8. Summary ---
+# --- 7. Summary ---
 echo "Kiosk installation complete!" | tee -a "$LOGFILE"
 echo "----------------------------------------------------------"
 echo "Installed for user:  $USER_NAME"
