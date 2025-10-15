@@ -30,13 +30,14 @@ echo "Installing kiosk environment for user '$USER_NAME'..." | tee "$LOGFILE"
 echo "Installing dependencies..." | tee -a "$LOGFILE"
 apt update -y >>"$LOGFILE" 2>&1
 apt install -y \
-  python3 python3-pip python3-evdev \
-  xdotool unclutter chromium-browser \
-  xserver-xorg x11-xserver-utils \
-  labwc jq >>"$LOGFILE" 2>&1
+  python3 python3-pip python3-evdev python3-venv git jq \
+  xdotool unclutter x11-xserver-utils \
+  xserver-xorg labwc xdg-utils \
+  chromium-browser || apt install -y chromium >>"$LOGFILE" 2>&1
 
 # --- 2. Python packages ---
 echo "Installing Python modules..." | tee -a "$LOGFILE"
+pip3 install --upgrade pip >>"$LOGFILE" 2>&1
 pip3 install flask >>"$LOGFILE" 2>&1
 
 # --- 3. Install executables ---
