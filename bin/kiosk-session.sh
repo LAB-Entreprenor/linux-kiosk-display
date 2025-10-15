@@ -28,13 +28,20 @@ else
   sleep 2  # allow Flask to initialize
 fi
 
-# --- Determine which URL to open ---
+# --- Determine URLs to open ---
+URLS=()
 if [ -f "$CONFIG" ]; then
-  FIRST_URL=$(grep -o '"urls": *\[[^]]*' "$CONFIG" | sed 's/.*\["\([^"]*\).*/\1/' 2>/dev/null)
-  if [ -n "$FIRST_URL" ]; then
-    URL="$FIRST_URL"
-  fi
+  mapfile -t URLS < <(jq -r '.urls[]' "$CONFIG" 2>/dev/null | grep -v '^null$')
 fi
+
+# Fallback if none found
+if [ ${#URLS[@]} -eq 0 ]; then
+  URLS=("$FALLBACK_URL")
+fi
+
+# Join URLs into one line
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Launching Chromium with URLs: ${URLS[*]}" >> "$LOGFILE"
+
 
 # --- Fallback if no valid URL found ---
 if [ -z "$URL" ]; then
@@ -62,4 +69,4 @@ chromium \
   --disable-features=TranslateUI \
   --enable-features=OverlayScrollbar \
   --password-store=basic \
-  "$URL"
+  "${URLS[@]}"

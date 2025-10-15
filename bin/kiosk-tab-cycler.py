@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
-import os, time, json, subprocess
+import os
+import time
+import json
+import subprocess
 
-# --- Dynamic paths ---
-USER = os.environ.get("SUDO_USER") or os.environ.get("USER") or "pi"
-USER_HOME = os.path.expanduser(f"~{USER}")
-
-CONFIG_FILE = os.path.join(USER_HOME, "kiosk_config.json")
+# --- Configuration ---
 STATE_FILE = "/tmp/kiosk_state.json"
 DEFAULT_INTERVAL = 60  # seconds
+LOGFILE = "/tmp/kiosk-tab-cycler.log"
 
 
-def read_config():
-    """Load kiosk configuration, with fallbacks."""
-    if os.path.exists(CONFIG_FILE):
+def read_cycle_interval():
+    """Read the cycle interval from the kiosk config (if available)."""
+    user = os.environ.get("SUDO_USER") or os.environ.get("USER") or "pi"
+    config_file = os.path.expanduser(f"~{user}/kiosk_config.json")
+
+    if os.path.exists(config_file):
         try:
-            with open(CONFIG_FILE) as f:
+            with open(config_file) as f:
                 cfg = json.load(f)
-            return cfg
+            interval = int(cfg.get("cycle_interval", DEFAULT_INTERVAL))
+            return interval
         except Exception as e:
-            print(f"Error reading config: {e}")
-    return {"urls": [], "cycle_interval": DEFAULT_INTERVAL}
+            print(f"Error reading config: {e}", file=open(LOGFILE, "a"))
+    return DEFAULT_INTERVAL
 
 
 def is_idle():
-    """Check the /tmp state file written by kiosk-idle-reset."""
+    """Check if the system is idle according to /tmp/kiosk_state.json."""
     try:
         if os.path.exists(STATE_FILE):
             with open(STATE_FILE) as f:
@@ -34,61 +38,23 @@ def is_idle():
     return True
 
 
-def chromium_windows():
-    """Return a list of Chromium window IDs."""
-    try:
-        output = subprocess.check_output(
-            ["xdotool", "search", "--class", "chromium"], text=True
-        )
-        return output.strip().splitlines()
-    except subprocess.CalledProcessError:
-        return []
-
-
-def open_missing_tabs(urls):
-    """Ensure all URLs in the config are open in Chromium."""
-    if not urls:
-        return
-
-    windows = chromium_windows()
-    if not windows:
-        print("No Chromium windows found; skipping tab open.")
-        return
-
-    first_window = windows[0]
-    subprocess.run(["xdotool", "windowactivate", first_window], check=False)
-
-    # Open new tabs for all missing URLs
-    for url in urls[1:]:
-        subprocess.run(["xdotool", "key", "ctrl+t"], check=False)
-        time.sleep(0.3)
-        subprocess.run(["xdotool", "type", "--delay", "10", url], check=False)
-        subprocess.run(["xdotool", "key", "Return"], check=False)
-        time.sleep(1)
-
-
 def switch_tab():
-    """Switch to the next Chromium tab."""
-    subprocess.run(["xdotool", "key", "ctrl+Tab"], check=False)
+    """Send ctrl+Tab to Chromium."""
+    try:
+        subprocess.run(["xdotool", "key", "ctrl+Tab"], check=False)
+    except Exception as e:
+        with open(LOGFILE, "a") as log:
+            log.write(f"Error switching tab: {e}\n")
 
 
 def main():
-    print("Kiosk Tab Cycler started.")
-    cfg = read_config()
-    urls = cfg.get("urls", [])
-    interval = int(cfg.get("cycle_interval", DEFAULT_INTERVAL))
-
-    if not urls:
-        print("No URLs found in config file; exiting.")
-        return
-
-    print(f"Cycling every {interval}s between {len(urls)} URLs.")
-
-    # Ensure all URLs are open initially
-    open_missing_tabs(urls)
+    interval = read_cycle_interval()
+    print(f"Tab cycler running (interval: {interval}s, idle-only mode).")
 
     while True:
         if is_idle():
+            with open(LOGFILE, "a") as log:
+                log.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - Idle detected, switching tab\n")
             switch_tab()
         time.sleep(interval)
 
