@@ -11,6 +11,9 @@ STATE_FILE = "/tmp/kiosk_state.json"
 RESET_SCRIPT = "/usr/local/bin/kiosk-reset-url.sh"
 DEFAULT_IDLE = 600  # fallback idle time (10 minutes)
 
+ALT_KEYCODES = {ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT}
+F4_KEYCODE = ecodes.KEY_F4
+
 
 def load_idle_timeout():
     """Read idle_timeout from the kiosk config or use fallback."""
@@ -72,6 +75,21 @@ def get_input_devices():
     return devices
 
 
+def stop_all_services():
+    """Stop all kiosk-related services for troubleshooting."""
+    services = [
+        "kiosk.service",
+        "kiosk-idle-reset.service",
+        "kiosk-tab-cycler.service",
+    ]
+    print("ALT+F4 detected — stopping all kiosk services for troubleshooting.")
+    for service in services:
+        try:
+            subprocess.run(["systemctl", "stop", service], check=False)
+        except Exception as e:
+            print(f"Error stopping {service}: {e}")
+
+
 def main():
     last_activity = time.time()
     devices = get_input_devices()
@@ -79,6 +97,8 @@ def main():
     print(f"Monitoring {len(devices)} input devices — idle timeout = {idle_seconds}s")
 
     write_state(True)
+
+    pressed_keys = set()
 
     while True:
         # Periodically re-read config in case idle timeout changes
@@ -91,9 +111,20 @@ def main():
             for d in devices:
                 if d.fd in r:
                     for ev in d.read():
-                        if ev.type in (ecodes.EV_KEY, ecodes.EV_ABS, ecodes.EV_REL):
+                        if ev.type == ecodes.EV_KEY:
+                            if ev.value == 1:  # key down
+                                pressed_keys.add(ev.code)
+                                # Detect ALT+F4 combination
+                                if F4_KEYCODE in pressed_keys and pressed_keys & ALT_KEYCODES:
+                                    stop_all_services()
+                                    return
+                            elif ev.value == 0:  # key up
+                                pressed_keys.discard(ev.code)
+
+                        elif ev.type in (ecodes.EV_ABS, ecodes.EV_REL):
                             last_activity = now
                             write_state(True)
+
         elif now - last_activity >= idle_seconds:
             print(f"Idle for {idle_seconds}s — restarting kiosk session...")
             subprocess.run([RESET_SCRIPT], check=False)
