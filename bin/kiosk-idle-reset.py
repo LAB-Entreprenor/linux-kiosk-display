@@ -100,9 +100,21 @@ def main():
 
     pressed_keys = set()
 
+    # Track modification time for on-the-fly config reloads
+    last_config_mtime = os.path.getmtime(CONFIG_FILE) if os.path.exists(CONFIG_FILE) else 0
+    idle_seconds = load_idle_timeout()
+
     while True:
-        # Periodically re-read config in case idle timeout changes
-        idle_seconds = load_idle_timeout()
+        # Check if config file changed
+        try:
+            if os.path.exists(CONFIG_FILE):
+                mtime = os.path.getmtime(CONFIG_FILE)
+                if mtime != last_config_mtime:
+                    idle_seconds = load_idle_timeout()
+                    last_config_mtime = mtime
+                    print(f"Config reloaded — new idle timeout = {idle_seconds}s")
+        except Exception as e:
+            print(f"Config check failed: {e}")
 
         r, _, _ = select.select([d.fd for d in devices], [], [], 1)
         now = time.time()
@@ -128,7 +140,7 @@ def main():
         elif now - last_activity >= idle_seconds:
             print(f"Idle for {idle_seconds}s — restarting kiosk session...")
             subprocess.run([RESET_SCRIPT], check=False)
-            wait_for_chromium(timeout=30)
+            wait_for_chromium(timeout=5)
             write_state(False)
             last_activity = now
 

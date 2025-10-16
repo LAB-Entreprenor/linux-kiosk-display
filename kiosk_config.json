@@ -3,6 +3,6 @@
     "https://reise.skyss.no/stops/stop-group/NSR:StopPlace:32266",
     "https://yr.no/place/Norway/Vestland/Bergen/"
   ],
-  "cycle_interval": 60,
-  "idle_timeout": 600
+  "cycle_interval": 30,
+  "idle_timeout": 120
 }

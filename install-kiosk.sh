@@ -136,7 +136,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "https://yr.no/place/Norway/Vestland/Bergen/"
   ],
   "cycle_interval": 31,
-  "idle_timeout": 120
+  "idle_timeout": 90
 }
 EOF
 else
