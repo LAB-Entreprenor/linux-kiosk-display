@@ -2,6 +2,7 @@
 import os, time, glob, subprocess, select, json
 from evdev import InputDevice, ecodes
 
+
 # --- Dynamic path setup ---
 USER = os.environ.get("SUDO_USER") or os.environ.get("USER") or "pi"
 USER_HOME = os.path.expanduser(f"~{USER}")
@@ -64,14 +65,25 @@ def wait_for_chromium(timeout=30):
 
 
 def get_input_devices():
-    """Collect all readable input devices."""
+    """Collect only input devices that support keyboard, mouse, or touchscreen events."""
     devices = []
     for path in glob.glob("/dev/input/event*"):
-        if os.access(path, os.R_OK):
-            try:
-                devices.append(InputDevice(path))
-            except Exception as e:
-                print(f"Cannot access {path}: {e}")
+        if not os.access(path, os.R_OK):
+            continue
+        try:
+            dev = InputDevice(path)
+            caps = dev.capabilities()
+            types = caps.keys()
+
+            # Only include devices that support real user input
+            if any(t in (ecodes.EV_KEY, ecodes.EV_REL, ecodes.EV_ABS) for t in types):
+                devices.append(dev)
+                print(f"Tracking input device: {dev.name}")
+            else:
+                print(f"Ignoring non-interactive device: {dev.name}")
+
+        except Exception as e:
+            print(f"Cannot access {path}: {e}")
     return devices
 
 
