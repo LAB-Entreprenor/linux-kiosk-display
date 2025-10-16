@@ -57,6 +57,7 @@ Requires=kiosk-manager.service
 User=$USER_NAME
 Group=$USER_NAME
 Environment=DISPLAY=:0
+Environment=XAUTHORITY=$USER_HOME/.Xauthority
 Environment=XDG_RUNTIME_DIR=/run/user/$(id -u $USER_NAME)
 ExecStart=$SYSTEM_BIN/kiosk-session.sh
 Restart=always
@@ -109,6 +110,9 @@ Description=Kiosk Tab Cycler Service
 After=multi-user.target
 
 [Service]
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=$USER_HOME/.Xauthority
+Environment=XDG_RUNTIME_DIR=/run/user/$(id -u $USER_NAME)
 ExecStart=/usr/bin/python3 $SYSTEM_BIN/kiosk-tab-cycler.py
 Restart=always
 RestartSec=5
@@ -131,8 +135,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "https://reise.skyss.no/stops/stop-group/NSR:StopPlace:32266",
     "https://yr.no/place/Norway/Vestland/Bergen/"
   ],
-  "cycle_interval": 60,
-  "idle_timeout": 600
+  "cycle_interval": 31,
+  "idle_timeout": 120
 }
 EOF
 else
