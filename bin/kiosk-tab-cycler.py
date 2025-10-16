@@ -43,7 +43,7 @@ def switch_tab():
     try:
         subprocess.run(["xdotool", "key", "ctrl+Tab"], check=False)
         time.sleep(0.2)
-        subprocess.run(["xdotool", "key", "f5"], check=False)
+        subprocess.run(["xdotool", "key", "0xffc2"], check=False)
     except Exception as e:
         with open(LOGFILE, "a") as log:
             log.write(f"Error switching tab: {e}\n")
