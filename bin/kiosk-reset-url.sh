@@ -17,17 +17,19 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Resetting kiosk session..." >> "$LOGFILE"
 if pgrep chromium >/dev/null; then
   echo "INFO Killing Chromium..." >> "$LOGFILE"
   pkill -f chromium
-  sleep 2
+  sleep 1
 else
   echo "INFO No Chromium process found." >> "$LOGFILE"
 fi
 
-# --- Restart kiosk session ---
-if [ -x "$SESSION_SCRIPT" ]; then
-  echo "INFO Restarting kiosk session from $SESSION_SCRIPT" >> "$LOGFILE"
-  nohup "$SESSION_SCRIPT" >> "$LOGFILE" 2>&1 &
+# --- Restart kiosk service via systemd ---
+SERVICE="kiosk.service"
+echo "INFO Restarting $SERVICE via systemd" >> "$LOGFILE"
+
+if systemctl is-active --quiet "$SERVICE"; then
+  systemctl restart "$SERVICE" >> "$LOGFILE" 2>&1
 else
-  echo "ERROR Kiosk session script not found or not executable: $SESSION_SCRIPT" >> "$LOGFILE"
+  systemctl start "$SERVICE" >> "$LOGFILE" 2>&1
 fi
 
-echo "✅ Done." >> "$LOGFILE"
+echo "INFO Systemd restart complete." >> "$LOGFILE"
