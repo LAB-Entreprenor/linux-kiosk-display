@@ -6,7 +6,7 @@ import subprocess
 
 # --- Configuration ---
 STATE_FILE = "/tmp/kiosk_state.json"
-DEFAULT_INTERVAL = 90  # seconds
+DEFAULT_INTERVAL = 31  # seconds
 LOGFILE = "/tmp/kiosk-tab-cycler.log"
 
 
@@ -42,6 +42,8 @@ def switch_tab():
     """Send ctrl+Tab to Chromium."""
     try:
         subprocess.run(["xdotool", "key", "ctrl+Tab"], check=False)
+        time.sleep(0.2)
+        subprocess.run(["xdotool", "key", "f5"], check=False)
     except Exception as e:
         with open(LOGFILE, "a") as log:
             log.write(f"Error switching tab: {e}\n")
