@@ -12,7 +12,7 @@ USER_NAME="$(whoami)"
 USER_HOME="$(eval echo "~$USER_NAME")"
 
 CONFIG="$USER_HOME/kiosk_config.json"
-FALLBACK_URL="http://localhost:8080"
+FALLBACK_URL="http://0.0.0.0:8080"
 MANAGER_APP="/usr/local/bin/kiosk-manager.py"
 LOGFILE="/tmp/kiosk-session.log"
 URL=""

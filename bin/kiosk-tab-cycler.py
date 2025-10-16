@@ -6,7 +6,7 @@ import subprocess
 
 # --- Configuration ---
 STATE_FILE = "/tmp/kiosk_state.json"
-DEFAULT_INTERVAL = 60  # seconds
+DEFAULT_INTERVAL = 90  # seconds
 LOGFILE = "/tmp/kiosk-tab-cycler.log"
 
 
