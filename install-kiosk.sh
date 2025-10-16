@@ -50,7 +50,8 @@ mkdir -p "$SYSTEMD_DIR"
 cat <<EOF > "$SYSTEMD_DIR/kiosk.service"
 [Unit]
 Description=Raspberry Pi Kiosk Session
-After=graphical.target network.target
+After=graphical.target network.target kiosk-manager.service
+Requires=kiosk-manager.service
 
 [Service]
 User=$USER_NAME
@@ -59,10 +60,31 @@ Environment=DISPLAY=:0
 Environment=XDG_RUNTIME_DIR=/run/user/$(id -u $USER_NAME)
 ExecStart=$SYSTEM_BIN/kiosk-session.sh
 Restart=always
-RestartSec=5
+RestartSec=2
 
 [Install]
 WantedBy=graphical.target
+EOF
+
+# kiosk-manager.service
+cat <<EOF > "$SYSTEMD_DIR/kiosk-manager.service"
+[Unit]
+Description=Flask Kiosk Manager Service
+After=network.target
+
+[Service]
+User=$USER_NAME
+Group=$USER_NAME
+Environment=FLASK_ENV=production
+WorkingDirectory=$SYSTEM_BIN
+ExecStart=/usr/bin/python3 $SYSTEM_BIN/kiosk-manager.py
+Restart=always
+RestartSec=5
+StandardOutput=file:/tmp/kiosk-manager.log
+StandardError=file:/tmp/kiosk-manager-error.log
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
 # kiosk-idle-reset.service
@@ -95,8 +117,10 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
+# Reload and enable all services
 systemctl daemon-reload
-systemctl enable --now kiosk.service kiosk-idle-reset.service kiosk-tab-cycler.service
+systemctl enable --now kiosk-manager.service kiosk.service kiosk-idle-reset.service kiosk-tab-cycler.service
+
 
 # --- 4. Config file ---
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -142,10 +166,10 @@ echo "----------------------------------------------------------"
 echo "Installed for user:  $USER_NAME"
 echo "Config file:         $CONFIG_FILE"
 echo "Executables:         $SYSTEM_BIN"
-echo "Services installed:  kiosk.service, kiosk-idle-reset.service, kiosk-tab-cycler.service"
+echo "Services installed:  kiosk-manager.service kiosk.service, kiosk-idle-reset.service, kiosk-tab-cycler.service"
 echo "Desktop entry:       $DESKTOP_FILE"
 echo "Web Manager:         http://localhost:8080"
 echo "Install log:         $LOGFILE"
 echo "----------------------------------------------------------"
 echo "To restart all services manually:"
-echo "sudo systemctl restart kiosk.service kiosk-idle-reset.service kiosk-tab-cycler.service"
+echo "sudo systemctl restart kiosk-manager.service kiosk.service kiosk-idle-reset.service kiosk-tab-cycler.service"

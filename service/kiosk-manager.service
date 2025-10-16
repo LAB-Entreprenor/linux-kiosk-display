@@ -1,0 +1,17 @@
+[Unit]
+Description=Flask Kiosk Manager Service
+After=network.target
+
+[Service]
+User=%i
+Group=%i
+Environment=FLASK_ENV=production
+WorkingDirectory=/usr/local/bin
+ExecStart=/usr/bin/python3 /usr/local/bin/kiosk-manager.py
+Restart=always
+RestartSec=5
+StandardOutput=file:/tmp/kiosk-manager.log
+StandardError=file:/tmp/kiosk-manager-error.log
+
+[Install]
+WantedBy=multi-user.target
